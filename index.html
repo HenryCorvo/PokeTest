@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokéSearch Engine</title>
+    <style>
+        :root {
+            --primary-red: #ef5350;
+            --dark-blue: #335971;
+            --light-gray: #f4f4f4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-gray);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .search-container {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 { color: var(--primary-red); text-transform: uppercase; letter-spacing: 2px; }
+
+        input {
+            padding: 12px;
+            width: 250px;
+            border: 2px solid #ddd;
+            border-radius: 25px 0 0 25px;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: var(--primary-red);
+            color: white;
+            border: none;
+            border-radius: 0 25px 25px 0;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover { background-color: #d32f2f; }
+
+        #pokemon-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-width: 350px;
+            width: 100%;
+            display: none; /* Hidden until search */
+            text-align: center;
+        }
+
+        .poke-img {
+            width: 200px;
+            height: 200px;
+            background: #f9f9f9;
+            border-radius: 50%;
+            margin-bottom: 15px;
+        }
+
+        .name {
+            font-size: 1.5rem;
+            text-transform: capitalize;
+            margin: 10px 0;
+            color: var(--dark-blue);
+        }
+
+        .types {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .type-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: left;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        /* Type Colors */
+        .fire { background: #ff9d55; }
+        .grass { background: #63bb5b; }
+        .water { background: #5090d6; }
+        .electric { background: #f4d23c; }
+        .poison { background: #ab6ac8; }
+        .flying { background: #8fa8dd; }
+        .normal { background: #9099a1; }
+
+        .error { color: red; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="search-container">
+        <h1>PokéSearch</h1>
+        <input type="text" id="pokemonInput" placeholder="Enter Pokemon Name or ID...">
+        <button onclick="searchPokemon()">Search</button>
+        <p id="errorMessage" class="error">Pokemon not found. Try again!</p>
+    </div>
+
+    <div id="pokemon-card">
+        <img src="" alt="Pokemon Image" id="pokeImg" class="poke-img">
+        <h2 id="pokeName" class="name"></h2>
+        <div id="pokeTypes" class="types"></div>
+        
+        <div class="stats">
+            <div><strong>Height:</strong> <span id="height"></span></div>
+            <div><strong>Weight:</strong> <span id="weight"></span></div>
+            <div><strong>HP:</strong> <span id="hp"></span></div>
+            <div><strong>Attack:</strong> <span id="attack"></span></div>
+        </div>
+    </div>
+
+    <script>
+        async function searchPokemon() {
+            const input = document.getElementById('pokemonInput').value.toLowerCase().trim();
+            const card = document.getElementById('pokemon-card');
+            const error = document.getElementById('errorMessage');
+
+            if (!input) return;
+
+            try {
+                const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${input}`);
+                
+                if (!response.ok) throw new Error("Not found");
+
+                const data = await response.json();
+
+                // Fill Card Data
+                document.getElementById('pokeName').textContent = data.name;
+                document.getElementById('pokeImg').src = data.sprites.other['official-artwork'].front_default;
+                document.getElementById('height').textContent = (data.height / 10) + ' m';
+                document.getElementById('weight').textContent = (data.weight / 10) + ' kg';
+                document.getElementById('hp').textContent = data.stats[0].base_stat;
+                document.getElementById('attack').textContent = data.stats[1].base_stat;
+
+                // Handle Types
+                const typesDiv = document.getElementById('pokeTypes');
+                typesDiv.innerHTML = ''; // Clear old types
+                data.types.forEach(t => {
+                    const span = document.createElement('span');
+                    span.classList.add('type-badge', t.type.name);
+                    span.textContent = t.type.name;
+                    typesDiv.appendChild(span);
+                });
+
+                // Show Card, Hide Error
+                card.style.display = 'block';
+                error.style.display = 'none';
+
+            } catch (err) {
+                card.style.display = 'none';
+                error.style.display = 'block';
+            }
+        }
+
+        // Allow searching by pressing "Enter" key
+        document.getElementById('pokemonInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchPokemon();
+        });
+    </script>
+</body>
+</html>
